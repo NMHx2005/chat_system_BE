@@ -47,6 +47,7 @@ class SocketServer {
     private io: SocketIOServer;
     private connectedUsers: Map<string, SocketUser> = new Map();
     private channelUsers: Map<string, Set<string>> = new Map();
+    private videoRooms: Map<string, Set<string>> = new Map(); // roomId -> Set of peerIds
 
     // Static instance for global access
     private static instance: SocketServer;
@@ -199,6 +200,15 @@ class SocketServer {
 
             socket.on('video_call_ice_candidate', (data: IceCandidate) => {
                 this.handleVideoCallIceCandidate(socket, data);
+            });
+
+            // Group video call handlers
+            socket.on('join_video_room', (data: { roomId: string, peerId: string, userId: string }) => {
+                this.handleJoinVideoRoom(socket, data);
+            });
+
+            socket.on('leave_video_room', (data: { roomId: string, peerId: string }) => {
+                this.handleLeaveVideoRoom(socket, data);
             });
         });
     }
@@ -690,6 +700,76 @@ class SocketServer {
             }
         } catch (error) {
             console.error('Error handling video call ICE candidate:', error);
+        }
+    }
+
+    // Group video call handlers
+    private handleJoinVideoRoom(socket: AuthenticatedSocket, data: { roomId: string, peerId: string, userId: string }): void {
+        try {
+            if (!socket.userId) return;
+
+            console.log(`🔍 SocketServer - User ${socket.username} joining video room ${data.roomId} with peer ${data.peerId}`);
+
+            // Add peer to video room
+            if (!this.videoRooms.has(data.roomId)) {
+                this.videoRooms.set(data.roomId, new Set());
+            }
+            this.videoRooms.get(data.roomId)?.add(data.peerId);
+
+            // Join socket room for this video room
+            socket.join(data.roomId);
+
+            // Get existing participants
+            const existingPeers = Array.from(this.videoRooms.get(data.roomId) || []);
+            console.log(`🔍 SocketServer - Room ${data.roomId} participants:`, existingPeers);
+
+            // Send current participants to the new user
+            socket.emit('room_participants', {
+                roomId: data.roomId,
+                participants: existingPeers.filter(peerId => peerId !== data.peerId)
+            });
+
+            // Notify other users in the room about new participant
+            socket.to(data.roomId).emit('peer_joined_room', {
+                roomId: data.roomId,
+                peerId: data.peerId,
+                userId: data.userId,
+                username: socket.username
+            });
+
+            console.log(`🔍 SocketServer - User ${socket.username} joined video room ${data.roomId}`);
+        } catch (error) {
+            console.error('Error handling join video room:', error);
+            socket.emit('video_room_error', { message: 'Failed to join video room' });
+        }
+    }
+
+    private handleLeaveVideoRoom(socket: AuthenticatedSocket, data: { roomId: string, peerId: string }): void {
+        try {
+            if (!socket.userId) return;
+
+            console.log(`🔍 SocketServer - User ${socket.username} leaving video room ${data.roomId} with peer ${data.peerId}`);
+
+            // Remove peer from video room
+            this.videoRooms.get(data.roomId)?.delete(data.peerId);
+
+            // Leave socket room
+            socket.leave(data.roomId);
+
+            // Notify other users in the room
+            socket.to(data.roomId).emit('peer_left_room', {
+                roomId: data.roomId,
+                peerId: data.peerId
+            });
+
+            // Clean up empty rooms
+            if (this.videoRooms.get(data.roomId)?.size === 0) {
+                this.videoRooms.delete(data.roomId);
+            }
+
+            console.log(`🔍 SocketServer - User ${socket.username} left video room ${data.roomId}`);
+        } catch (error) {
+            console.error('Error handling leave video room:', error);
         }
     }
 }
