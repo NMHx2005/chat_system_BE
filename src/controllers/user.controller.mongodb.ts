@@ -210,4 +210,42 @@ export class UserController {
             });
         }
     }
+
+    /**
+     * Get user avatar (public endpoint - no auth required)
+     */
+    static async getUserAvatar(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            if (!id) {
+                res.status(400).json({
+                    success: false,
+                    message: 'User ID is required'
+                });
+                return;
+            }
+
+            const user = await userService.findById(id);
+            if (!user) {
+                res.status(404).json({
+                    success: false,
+                    message: 'User not found'
+                });
+                return;
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    avatar: user.avatar || null
+                }
+            });
+        } catch (error) {
+            console.error('Error getting user avatar:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Internal server error'
+            });
+        }
+    }
 }

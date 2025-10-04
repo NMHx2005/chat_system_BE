@@ -16,6 +16,8 @@ export interface IMessage extends Document {
   createdAt: Date;
   updatedAt: Date;
   replyTo?: ObjectId;
+  originalMessageId?: ObjectId; // For reply messages
+  isReply?: boolean; // Flag to indicate if this is a reply
   reactions?: Array<{
     userId: ObjectId;
     username: string;
@@ -81,12 +83,12 @@ export interface IMessageResponse {
   tags?: string[];
 }
 
-export class MessageModel {
+class MessageModel {
   static toResponse(message: IMessage): IMessageResponse {
     return {
       _id: message._id?.toString() || '',
-      channelId: message.channelId.toString(),
-      userId: message.userId.toString(),
+      channelId: message.channelId?.toString() || '',
+      userId: message.userId?.toString() || '',
       username: message.username,
       text: message.text,
       fileUrl: message.fileUrl,
@@ -145,4 +147,4 @@ export class MessageModel {
   }
 }
 
-export { IMessage as Message };
+export { MessageModel };

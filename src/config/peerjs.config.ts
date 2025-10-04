@@ -1,28 +1,39 @@
 import { ExpressPeerServer } from 'peer';
 
 export const createPeerServer = (server: any): any => {
-    // Configure SSL only if both key and cert are provided
-    const sslKey = process.env.SSL_KEY_PATH;
-    const sslCert = process.env.SSL_CERT_PATH;
-    const sslConfig = (process.env.NODE_ENV === 'production' && sslKey && sslCert)
-        ? { key: sslKey, cert: sslCert }
-        : undefined;
+    try {
+        console.log('🔍 Creating PeerJS server...');
 
-    const peerServer = ExpressPeerServer(server, {
-        path: '/peerjs',
-        proxied: true,
-        allow_discovery: true,
-        ...(sslConfig && { ssl: sslConfig })
-    });
+        const peerServer = ExpressPeerServer(server, {
+            path: '/peerjs',
+            proxied: true,
+            allow_discovery: true,
+            debug: true
+        });
 
-    // Handle peer server events
-    peerServer.on('connection', (client) => {
-        console.log('Peer connected:', client.getId());
-    });
+        console.log('🔍 PeerJS server created successfully');
 
-    peerServer.on('disconnect', (client) => {
-        console.log('Peer disconnected:', client.getId());
-    });
+        // Handle peer server events
+        peerServer.on('connection', (client: any) => {
+            console.log('🔍 Peer connected:', client.getId());
+        });
 
-    return peerServer;
+        peerServer.on('disconnect', (client: any) => {
+            console.log('🔍 Peer disconnected:', client.getId());
+        });
+
+        // Add error handling
+        peerServer.on('error', (error: any) => {
+            console.error('🔍 PeerJS server error:', error);
+        });
+
+        return peerServer;
+    } catch (error) {
+        console.error('🔍 Failed to create PeerJS server:', error);
+        // Return a mock server that doesn't crash the app
+        return {
+            on: () => { },
+            close: () => { }
+        };
+    }
 };

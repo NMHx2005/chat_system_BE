@@ -64,6 +64,7 @@ export function createApp(): express.Application {
                 auth: '/api/auth',
                 users: '/api/users',
                 groups: '/api/groups',
+                groupRequests: '/api/group-requests',
                 channels: '/api/channels',
                 messages: '/api/messages',
                 upload: '/api/upload',

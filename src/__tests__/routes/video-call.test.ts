@@ -45,7 +45,7 @@ describe('Video Call Routes', () => {
 
         // Mock middleware to pass authentication
         mockAuthMiddleware.mockImplementation((req, res, next) => {
-            req.user = { userId: testUser._id.toString(), roles: testUser.roles };
+            req.user = { id: testUser._id.toString(), username: testUser.username, email: testUser.email, roles: testUser.roles };
             next();
         });
 
@@ -267,7 +267,7 @@ describe('Video Call Routes', () => {
 
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 
@@ -298,7 +298,7 @@ describe('Video Call Routes', () => {
         it('should handle cleanup errors', async () => {
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 

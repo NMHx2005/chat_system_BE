@@ -16,7 +16,7 @@ declare global {
 }
 
 export interface JWTPayload {
-    id: string;
+    userId: string;
     username: string;
     email: string;
     roles: string[];
@@ -26,8 +26,8 @@ export interface JWTPayload {
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
     try {
-        const token = req.headers.authorization?.replace('Bearer ', '') || 
-                     req.cookies?.accessToken;
+        const token = req.headers.authorization?.replace('Bearer ', '') ||
+            req.cookies?.accessToken;
 
         if (!token) {
             res.status(401).json({
@@ -38,9 +38,9 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as JWTPayload;
-        
+
         req.user = {
-            id: decoded.id,
+            id: decoded.userId,
             username: decoded.username,
             email: decoded.email,
             roles: decoded.roles
@@ -66,7 +66,7 @@ export const requireRole = (roles: string[]) => {
         }
 
         const hasRequiredRole = req.user.roles.some(role => roles.includes(role));
-        
+
         if (!hasRequiredRole) {
             res.status(403).json({
                 status: 'error',

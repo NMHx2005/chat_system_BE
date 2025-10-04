@@ -67,7 +67,7 @@ export class UserModel {
             username: user.username,
             email: user.email,
             roles: user.roles,
-            groups: user.groups.map(id => id.toString()),
+            groups: user.groups?.map(id => id.toString()) || [],
             isActive: user.isActive,
             createdAt: user.createdAt.toISOString(),
             updatedAt: user.updatedAt.toISOString(),

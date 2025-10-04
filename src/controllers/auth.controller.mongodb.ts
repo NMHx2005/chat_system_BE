@@ -105,7 +105,7 @@ export class AuthController {
             }
 
             // Validate password
-            const validUser = await userService.validatePassword(user.email, password);
+            const validUser = await userService.validatePasswordForUser(user, password);
             if (!validUser) {
                 res.status(401).json({
                     success: false,
@@ -140,7 +140,7 @@ export class AuthController {
                 username: validUser.username,
                 email: validUser.email,
                 roles: validUser.roles,
-                groups: validUser.groups.map(id => id.toString()),
+                groups: validUser.groups?.map(id => id.toString()) || [],
                 isActive: validUser.isActive,
                 createdAt: validUser.createdAt.toISOString(),
                 updatedAt: validUser.updatedAt.toISOString(),
@@ -206,11 +206,34 @@ export class AuthController {
                 { expiresIn: '1h' }
             );
 
+            // Generate new refresh token
+            const newRefreshToken = jwt.sign(
+                { userId: user._id },
+                process.env.JWT_SECRET || 'your-secret-key',
+                { expiresIn: '7d' }
+            );
+
             res.json({
                 success: true,
                 message: 'Token refreshed successfully',
                 data: {
-                    accessToken
+                    user: {
+                        _id: user._id,
+                        username: user.username,
+                        email: user.email,
+                        roles: user.roles,
+                        groups: user.groups,
+                        isActive: user.isActive,
+                        createdAt: user.createdAt,
+                        updatedAt: user.updatedAt,
+                        lastLogin: user.lastLogin,
+                        avatar: user.avatar,
+                        bio: user.bio,
+                        phone: user.phone,
+                        address: user.address
+                    },
+                    accessToken,
+                    refreshToken: newRefreshToken
                 }
             });
         } catch (error: any) {

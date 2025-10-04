@@ -20,12 +20,17 @@ export interface IChannel extends Document {
         text: string;
         timestamp: Date;
     };
+    maxMembers?: number;
     settings?: {
-        allowFileUploads: boolean;
-        allowImageUploads: boolean;
-        allowVideoUploads: boolean;
-        maxFileSize: number;
-        allowedFileTypes: string[];
+        slowMode?: number;
+        requireApproval?: boolean;
+        allowReactions?: boolean;
+        allowPolls?: boolean;
+        allowFileUploads?: boolean;
+        allowImageUploads?: boolean;
+        allowVideoUploads?: boolean;
+        maxFileSize?: number;
+        allowedFileTypes?: string[];
     };
 }
 
@@ -48,10 +53,16 @@ export interface IChannelCreate {
 export interface IChannelUpdate {
     name?: string;
     description?: string;
+    groupId?: ObjectId; // Add groupId to update interface
     type?: 'text' | 'voice' | 'video';
     isPrivate?: boolean;
     isActive?: boolean;
+    maxMembers?: number; // Add maxMembers to update interface
     settings?: {
+        slowMode?: number;
+        requireApproval?: boolean;
+        allowReactions?: boolean;
+        allowPolls?: boolean;
         allowFileUploads?: boolean;
         allowImageUploads?: boolean;
         allowVideoUploads?: boolean;
@@ -80,12 +91,17 @@ export interface IChannelResponse {
         text: string;
         timestamp: string;
     };
+    maxMembers?: number;
     settings?: {
-        allowFileUploads: boolean;
-        allowImageUploads: boolean;
-        allowVideoUploads: boolean;
-        maxFileSize: number;
-        allowedFileTypes: string[];
+        slowMode?: number;
+        requireApproval?: boolean;
+        allowReactions?: boolean;
+        allowPolls?: boolean;
+        allowFileUploads?: boolean;
+        allowImageUploads?: boolean;
+        allowVideoUploads?: boolean;
+        maxFileSize?: number;
+        allowedFileTypes?: string[];
     };
     memberCount: number;
 }
@@ -112,6 +128,7 @@ export class ChannelModel {
                 text: channel.lastMessage.text,
                 timestamp: channel.lastMessage.timestamp.toISOString()
             } : undefined,
+            maxMembers: channel.maxMembers,
             settings: channel.settings,
             memberCount: channel.members?.length || 0
         };
@@ -141,11 +158,19 @@ export class ChannelModel {
 
         if (data.name !== undefined) update.name = data.name;
         if (data.description !== undefined) update.description = data.description;
+        if (data.groupId !== undefined) update.groupId = data.groupId;
         if (data.type !== undefined) update.type = data.type;
         if (data.isPrivate !== undefined) update.isPrivate = data.isPrivate;
         if (data.isActive !== undefined) update.isActive = data.isActive;
+        if (data.maxMembers !== undefined) (update as any).maxMembers = data.maxMembers;
+
         if (data.settings !== undefined) {
+            // Handle new settings structure
             update.settings = {
+                slowMode: data.settings.slowMode ?? 0,
+                requireApproval: data.settings.requireApproval ?? false,
+                allowReactions: data.settings.allowReactions ?? true,
+                allowPolls: data.settings.allowPolls ?? true,
                 allowFileUploads: data.settings.allowFileUploads ?? true,
                 allowImageUploads: data.settings.allowImageUploads ?? true,
                 allowVideoUploads: data.settings.allowVideoUploads ?? true,

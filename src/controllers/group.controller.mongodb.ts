@@ -8,10 +8,31 @@ export class GroupController {
      */
     static async getAllGroups(req: Request, res: Response): Promise<void> {
         try {
-            const groups = await groupService.getAllGroups();
+            const {
+                page = 1,
+                limit = 10,
+                search,
+                status,
+                category,
+                isPrivate,
+                sortBy,
+                sortOrder
+            } = req.query;
+
+            const result = await groupService.getAllGroups({
+                page: parseInt(page as string),
+                limit: parseInt(limit as string),
+                search: search as string,
+                status: status as string,
+                category: category as string,
+                isPrivate: isPrivate ? isPrivate === 'true' : undefined,
+                sortBy: sortBy as string,
+                sortOrder: sortOrder as string
+            });
+
             res.json({
                 success: true,
-                data: groups
+                data: result
             });
         } catch (error) {
             console.error('Error getting all groups:', error);
@@ -226,10 +247,21 @@ export class GroupController {
     static async removeMember(req: Request, res: Response): Promise<void> {
         try {
             const { id, userId } = req.params;
-            if (!id || !userId) {
+
+            // Enhanced validation
+            if (!id || !userId || userId === 'undefined' || userId.trim() === '') {
                 res.status(400).json({
                     success: false,
-                    message: 'Group ID and User ID are required'
+                    message: 'Group ID and User ID are required and must be valid'
+                });
+                return;
+            }
+
+            // Validate ObjectId format
+            if (!/^[0-9a-fA-F]{24}$/.test(id) || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Invalid ID format. IDs must be 24-character hex strings'
                 });
                 return;
             }
@@ -239,14 +271,15 @@ export class GroupController {
             if (!group) {
                 res.status(404).json({
                     success: false,
-                    message: 'Group not found'
+                    message: 'Group not found or member not found in group'
                 });
                 return;
             }
 
             res.json({
                 success: true,
-                data: group
+                data: group,
+                message: 'Member removed successfully'
             });
         } catch (error) {
             console.error('Error removing member:', error);

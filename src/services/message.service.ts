@@ -47,7 +47,10 @@ export class MessageService {
             const skip = (page - 1) * limit;
             const filter = {
                 channelId: new ObjectId(channelId),
-                isDeleted: false
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ]
             };
 
             const [messages, total] = await Promise.all([
@@ -206,7 +209,10 @@ export class MessageService {
             const messages = await this.getCollection()
                 .find({
                     channelId: new ObjectId(channelId),
-                    isDeleted: false
+                    $or: [
+                        { isDeleted: { $ne: true } },
+                        { isDeleted: { $exists: false } }
+                    ]
                 })
                 .sort({ createdAt: -1 })
                 .limit(limit)
@@ -223,7 +229,10 @@ export class MessageService {
         try {
             return await this.getCollection().countDocuments({
                 channelId: new ObjectId(channelId),
-                isDeleted: false
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ]
             });
         } catch (error) {
             console.error('Error getting message count:', error);
@@ -241,7 +250,10 @@ export class MessageService {
             const skip = (page - 1) * limit;
             const filter = {
                 userId: new ObjectId(userId),
-                isDeleted: false
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ]
             };
 
             const [messages, total] = await Promise.all([
@@ -269,7 +281,13 @@ export class MessageService {
     // Admin methods
     async countMessages(): Promise<number> {
         try {
-            return await this.getCollection().countDocuments({ isDeleted: false });
+            // Count all messages, excluding only those explicitly marked as deleted
+            return await this.getCollection().countDocuments({
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ]
+            });
         } catch (error) {
             console.error('Error counting messages:', error);
             throw error;
@@ -284,7 +302,10 @@ export class MessageService {
             tomorrow.setDate(tomorrow.getDate() + 1);
 
             return await this.getCollection().countDocuments({
-                isDeleted: false,
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ],
                 createdAt: { $gte: today, $lt: tomorrow }
             });
         } catch (error) {
@@ -299,7 +320,10 @@ export class MessageService {
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
             return await this.getCollection().countDocuments({
-                isDeleted: false,
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ],
                 createdAt: { $gte: oneWeekAgo }
             });
         } catch (error) {
@@ -311,15 +335,34 @@ export class MessageService {
     // Additional methods for controllers
     async getMessagesByChannel(channelId: string, limit: number, offset: number): Promise<IMessageResponse[]> {
         try {
+            console.log('🔍 MessageService.getMessagesByChannel - Channel ID:', channelId);
+
+            const filter = {
+                channelId: new ObjectId(channelId),
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ]
+            };
+
+            console.log('🔍 MessageService.getMessagesByChannel - Filter:', JSON.stringify(filter));
+
             const messages = await this.getCollection()
-                .find({
-                    channelId: new ObjectId(channelId),
-                    isDeleted: false
-                })
+                .find(filter)
                 .skip(offset)
                 .limit(limit)
                 .sort({ createdAt: -1 })
                 .toArray();
+
+            console.log('🔍 MessageService.getMessagesByChannel - Raw messages found:', messages.length);
+            console.log('🔍 MessageService.getMessagesByChannel - Raw messages:', messages.map(m => ({
+                _id: m._id,
+                channelId: m.channelId,
+                userId: m.userId,
+                username: m.username,
+                text: m.text,
+                type: m.type
+            })));
 
             return messages.reverse().map(message => MessageModel.toResponse(message));
         } catch (error) {
@@ -333,7 +376,10 @@ export class MessageService {
             const messages = await this.getCollection()
                 .find({
                     userId: new ObjectId(userId),
-                    isDeleted: false
+                    $or: [
+                        { isDeleted: { $ne: true } },
+                        { isDeleted: { $exists: false } }
+                    ]
                 })
                 .skip(offset)
                 .limit(limit)
@@ -356,7 +402,10 @@ export class MessageService {
     }): Promise<IMessageResponse[]> {
         try {
             const filter: any = {
-                isDeleted: false,
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ],
                 $text: { $search: options.query }
             };
 
@@ -386,7 +435,10 @@ export class MessageService {
         try {
             const message = await this.getCollection().findOne({
                 _id: new ObjectId(id),
-                isDeleted: false
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ]
             });
 
             return message ? MessageModel.toResponse(message) : null;

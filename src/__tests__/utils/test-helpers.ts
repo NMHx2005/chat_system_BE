@@ -198,7 +198,7 @@ export const createTestVideoCall = (overrides: Partial<TestVideoCall> = {}): Tes
 export const generateTestToken = (user: TestUser): string => {
     return jwt.sign(
         {
-            userId: user._id.toString(),
+            id: user._id.toString(),
             username: user.username,
             email: user.email,
             roles: user.roles
@@ -220,7 +220,7 @@ export const createAuthenticatedRequest = (user: TestUser, overrides: Partial<Re
             ...overrides.headers
         },
         user: {
-            userId: user._id.toString(),
+            id: user._id.toString(),
             username: user.username,
             email: user.email,
             roles: user.roles

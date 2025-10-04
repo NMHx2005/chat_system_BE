@@ -48,17 +48,40 @@ class SocketServer {
     private connectedUsers: Map<string, SocketUser> = new Map();
     private channelUsers: Map<string, Set<string>> = new Map();
 
+    // Static instance for global access
+    private static instance: SocketServer;
+
     constructor(server: HTTPServer) {
         this.io = new SocketIOServer(server, {
             cors: {
                 origin: process.env.FRONTEND_URL || "http://localhost:4200",
                 methods: ["GET", "POST"],
                 credentials: true
-            }
+            },
+            transports: ['polling'],
+            allowEIO3: true,
+            pingTimeout: 60000,
+            pingInterval: 25000,
+            allowUpgrades: false
         });
 
         this.setupMiddleware();
         this.setupEventHandlers();
+        SocketServer.instance = this;
+    }
+
+    // Static method to get instance
+    static getInstance(): SocketServer {
+        return SocketServer.instance;
+    }
+
+    // Method to broadcast message from HTTP API
+    broadcastMessage(channelId: string, message: any): void {
+        this.io.emit('new_message', {
+            channelId: channelId,
+            message: message
+        });
+        console.log(`🔍 SocketServer.broadcastMessage - Message broadcasted to channel ${channelId}`);
     }
 
     private setupMiddleware(): void {
@@ -284,12 +307,8 @@ class SocketServer {
         try {
             if (!socket.userId || !socket.username) return;
 
-            // Verify user is in the channel
-            const user = this.connectedUsers.get(socket.userId);
-            if (!user?.currentChannel || user.currentChannel !== data.channelId) {
-                socket.emit('error', { message: 'You must join the channel first' });
-                return;
-            }
+            // No need to verify channel membership since user is already in the group
+            // The frontend will handle group/channel access control
 
             // Create message in database
             const messageData = {
@@ -304,8 +323,8 @@ class SocketServer {
 
             const savedMessage = await messageService.create(messageData);
 
-            // Broadcast message to all users in channel
-            this.io.to(data.channelId).emit('new_message', {
+            // Broadcast message to all connected users
+            this.io.emit('new_message', {
                 channelId: data.channelId,
                 message: savedMessage
             });

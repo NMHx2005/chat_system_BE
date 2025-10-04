@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { clientService } from '@/services/client.service';
+import { clientService } from '../services/client.service';
 
 export class ClientController {
     /**

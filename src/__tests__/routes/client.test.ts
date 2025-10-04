@@ -58,7 +58,7 @@ describe('Client Routes', () => {
 
         // Mock middleware to pass authentication
         mockAuthMiddleware.mockImplementation((req, res, next) => {
-            req.user = { userId: testUser._id.toString(), roles: testUser.roles };
+            req.user = { id: testUser._id.toString(), username: testUser.username, email: testUser.email, roles: testUser.roles };
             next();
         });
     });

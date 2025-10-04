@@ -43,7 +43,7 @@ describe('Users Routes', () => {
 
         // Mock middleware to pass authentication
         mockAuthMiddleware.mockImplementation((req, res, next) => {
-            req.user = { userId: testUser._id.toString(), roles: testUser.roles };
+            req.user = { id: testUser._id.toString(), username: testUser.username, email: testUser.email, roles: testUser.roles };
             next();
         });
 
@@ -68,7 +68,7 @@ describe('Users Routes', () => {
 
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 
@@ -99,7 +99,7 @@ describe('Users Routes', () => {
         it('should handle pagination parameters', async () => {
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 
@@ -182,7 +182,7 @@ describe('Users Routes', () => {
 
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 
@@ -205,7 +205,7 @@ describe('Users Routes', () => {
         it('should validate required fields', async () => {
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 
@@ -232,7 +232,7 @@ describe('Users Routes', () => {
         it('should handle duplicate email', async () => {
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 
@@ -347,7 +347,7 @@ describe('Users Routes', () => {
 
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 
@@ -369,7 +369,7 @@ describe('Users Routes', () => {
         it('should handle user not found', async () => {
             // Mock super admin authentication
             mockAuthMiddleware.mockImplementation((req, res, next) => {
-                req.user = { userId: superAdminUser._id.toString(), roles: superAdminUser.roles };
+                req.user = { id: superAdminUser._id.toString(), username: superAdminUser.username, email: superAdminUser.email, roles: superAdminUser.roles };
                 next();
             });
 

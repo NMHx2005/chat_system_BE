@@ -8,7 +8,7 @@ export class VideoCallController {
      */
     async getCallHistory(req: Request, res: Response): Promise<void> {
         try {
-            const userId = (req as any).user?.userId;
+            const userId = req.user?.id;
             const limit = parseInt(req.query.limit as string) || 50;
 
             if (!userId) {
@@ -36,7 +36,7 @@ export class VideoCallController {
      */
     async getActiveCalls(req: Request, res: Response): Promise<void> {
         try {
-            const userId = (req as any).user?.userId;
+            const userId = req.user?.id;
 
             if (!userId) {
                 res.status(401).json({ success: false, message: 'User not authenticated' });
@@ -63,7 +63,7 @@ export class VideoCallController {
      */
     async getCallStats(req: Request, res: Response): Promise<void> {
         try {
-            const userId = (req as any).user?.userId;
+            const userId = req.user?.id;
 
             if (!userId) {
                 res.status(401).json({ success: false, message: 'User not authenticated' });

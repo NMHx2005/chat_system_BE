@@ -34,23 +34,30 @@ export interface IceCandidate {
 }
 
 export class VideoCallService {
-    private collection: Collection<IVideoCall>;
+    private collection: Collection<IVideoCall> | null = null;
 
     constructor() {
-        this.collection = mongoDB.getCollection<IVideoCall>('videoCalls');
+        // Lazy initialization - collection will be initialized when first accessed
+    }
+
+    private getCollection(): Collection<IVideoCall> {
+        if (!this.collection) {
+            this.collection = mongoDB.getCollection<IVideoCall>('videoCalls');
+        }
+        return this.collection;
     }
 
     // Create a new video call
     async createCall(callData: IVideoCallCreate): Promise<IVideoCallResponse> {
         try {
             const call = VideoCallModel.toCreate(callData);
-            const result = await this.collection.insertOne({
+            const result = await this.getCollection().insertOne({
                 ...call,
                 createdAt: new Date(),
                 updatedAt: new Date()
             } as IVideoCall);
 
-            const createdCall = await this.collection.findOne({ _id: result.insertedId });
+            const createdCall = await this.getCollection().findOne({ _id: result.insertedId });
             if (!createdCall) {
                 throw new Error('Failed to create video call');
             }
@@ -65,7 +72,7 @@ export class VideoCallService {
     // Update call status
     async updateCallStatus(callId: string, status: IVideoCall['status']): Promise<boolean> {
         try {
-            const result = await this.collection.findOneAndUpdate(
+            const result = await this.getCollection().findOneAndUpdate(
                 { callId },
                 {
                     $set: {
@@ -86,7 +93,7 @@ export class VideoCallService {
     // End call and update duration
     async endCall(callId: string, duration?: number): Promise<boolean> {
         try {
-            const call = await this.collection.findOne({ callId });
+            const call = await this.getCollection().findOne({ callId });
             if (!call) {
                 throw new Error('Call not found');
             }
@@ -94,7 +101,7 @@ export class VideoCallService {
             const endTime = new Date();
             const callDuration = duration || (endTime.getTime() - call.startTime.getTime()) / 1000;
 
-            await this.collection.findOneAndUpdate(
+            await this.getCollection().findOneAndUpdate(
                 { callId },
                 {
                     status: 'ended',
@@ -114,7 +121,7 @@ export class VideoCallService {
     // Get call by ID
     async getCallById(callId: string): Promise<IVideoCallResponse | null> {
         try {
-            const call = await this.collection.findOne({ callId });
+            const call = await this.getCollection().findOne({ callId });
             return call ? VideoCallModel.toResponse(call) : null;
         } catch (error) {
             console.error('Error getting call by ID:', error);
@@ -125,7 +132,7 @@ export class VideoCallService {
     // Get calls by user
     async getCallsByUser(userId: string): Promise<IVideoCallResponse[]> {
         try {
-            const calls = await this.collection.find({
+            const calls = await this.getCollection().find({
                 $or: [
                     { callerId: new ObjectId(userId) },
                     { receiverId: new ObjectId(userId) }
@@ -142,7 +149,7 @@ export class VideoCallService {
     // Get calls by channel
     async getCallsByChannel(channelId: string): Promise<IVideoCallResponse[]> {
         try {
-            const calls = await this.collection.find({
+            const calls = await this.getCollection().find({
                 channelId: new ObjectId(channelId)
             }).toArray();
 
@@ -170,7 +177,7 @@ export class VideoCallService {
                 ]
             } : {};
 
-            const calls = await this.collection.find(filter).toArray();
+            const calls = await this.getCollection().find(filter).toArray();
 
             const acceptedCalls = calls.filter(call => call.status === 'accepted').length;
             const rejectedCalls = calls.filter(call => call.status === 'rejected').length;
@@ -196,13 +203,13 @@ export class VideoCallService {
     // Cleanup expired calls
     async cleanupExpiredCalls(): Promise<number> {
         try {
-            const expiredCalls = await this.collection.find({
+            const expiredCalls = await this.getCollection().find({
                 status: { $in: ['calling', 'ringing'] },
                 createdAt: { $lt: new Date(Date.now() - 30 * 60 * 1000) } // 30 minutes ago
             }).toArray();
 
             if (expiredCalls.length > 0) {
-                const result = await this.collection.updateMany(
+                const result = await this.getCollection().updateMany(
                     { _id: { $in: expiredCalls.map(call => call._id) } },
                     {
                         $set: {
@@ -225,7 +232,7 @@ export class VideoCallService {
     // Get active calls
     async getActiveCalls(): Promise<IVideoCallResponse[]> {
         try {
-            const calls = await this.collection.find({
+            const calls = await this.getCollection().find({
                 status: { $in: ['calling', 'ringing', 'accepted'] }
             }).toArray();
 
@@ -239,7 +246,7 @@ export class VideoCallService {
     // Delete call
     async deleteCall(callId: string): Promise<boolean> {
         try {
-            const result = await this.collection.deleteOne({ callId });
+            const result = await this.getCollection().deleteOne({ callId });
             return result.deletedCount > 0;
         } catch (error) {
             console.error('Error deleting call:', error);

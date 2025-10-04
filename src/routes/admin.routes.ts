@@ -16,8 +16,17 @@ router.get('/users', requireSuperAdmin, AdminController.getAllUsers);
 // Create user (Super Admin only)
 router.post('/users', requireSuperAdmin, AdminController.createUser);
 
+// Update user (Super Admin only)
+router.put('/users/:id', requireSuperAdmin, AdminController.updateUser);
+
 // Delete user (Super Admin only)
 router.delete('/users/:id', requireSuperAdmin, AdminController.deleteUser);
+
+// Bulk delete users (Super Admin only)
+router.post('/users/bulk-delete', requireSuperAdmin, AdminController.bulkDeleteUsers);
+
+// Bulk update users (Super Admin only)
+router.post('/users/bulk-update', requireSuperAdmin, AdminController.bulkUpdateUsers);
 
 // Get system statistics
 router.get('/stats', AdminController.getSystemStats);
@@ -30,5 +39,17 @@ router.get('/groups/stats', AdminController.getGroupStats);
 
 // Get channel statistics
 router.get('/channels/stats', AdminController.getChannelStats);
+
+// Get all groups (Admin only)
+router.get('/groups', AdminController.getAllGroups);
+
+// Get all channels (Admin only)
+router.get('/channels', AdminController.getAllChannels);
+
+// Get user groups (Admin only)
+router.get('/users/:userId/groups', AdminController.getUserGroups);
+
+// Get user statistics (Admin only)
+router.get('/users/stats', AdminController.getUserStats);
 
 export default router;

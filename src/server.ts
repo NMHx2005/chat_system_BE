@@ -3,7 +3,6 @@ import { createApp } from './app';
 import { mongoDB } from './db/mongodb';
 import { createServer } from 'http';
 import { SocketServer } from './sockets';
-import { createPeerServer } from './config/peerjs.config';
 
 // Load environment variables
 dotenv.config();
@@ -26,16 +25,12 @@ async function startServer() {
     // Initialize Socket.io
     const socketServer = new SocketServer(server);
 
-    // Initialize PeerJS server
-    const peerServer = createPeerServer(server);
-    app.use('/peerjs', peerServer);
-
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
       console.log(`🔌 Socket.io server initialized`);
-      console.log(`📹 PeerJS server running on http://localhost:${PORT}/peerjs`);
+      console.log(`📹 PeerJS server should run separately on port 9000`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

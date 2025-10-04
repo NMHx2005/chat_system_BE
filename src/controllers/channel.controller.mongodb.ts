@@ -22,6 +22,46 @@ export class ChannelController {
     }
 
     /**
+     * Get channels with pagination
+     */
+    static async getChannelsPaginated(req: Request, res: Response): Promise<void> {
+        try {
+            const {
+                page = 1,
+                limit = 10,
+                search,
+                groupId,
+                channelType,
+                isActive,
+                sortBy,
+                sortOrder
+            } = req.query;
+
+            const result = await channelService.getChannelsPaginated({
+                page: parseInt(page as string),
+                limit: parseInt(limit as string),
+                search: search as string,
+                groupId: groupId as string,
+                channelType: channelType as string,
+                isActive: isActive ? isActive === 'true' : undefined,
+                sortBy: sortBy as string,
+                sortOrder: sortOrder as 'asc' | 'desc'
+            });
+
+            res.json({
+                success: true,
+                data: result
+            });
+        } catch (error) {
+            console.error('Error getting channels with pagination:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Internal server error'
+            });
+        }
+    }
+
+    /**
      * Get channels by group ID
      */
     static async getChannelsByGroup(req: Request, res: Response): Promise<void> {

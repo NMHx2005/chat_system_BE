@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
+import { ObjectId } from 'mongodb';
 import { messageService } from '../services/message.service';
+import SocketServer from '../sockets/socket.server';
 
 export class MessageController {
     /**
@@ -17,11 +19,16 @@ export class MessageController {
             }
             const { limit = 50, offset = 0 } = req.query;
 
+            console.log('🔍 MessageController.getMessagesByChannel - Channel ID:', channelId);
+            console.log('🔍 MessageController.getMessagesByChannel - Limit:', limit, 'Offset:', offset);
+
             const messages = await messageService.getMessagesByChannel(
                 channelId,
                 parseInt(limit as string),
                 parseInt(offset as string)
             );
+
+            console.log('🔍 MessageController.getMessagesByChannel - Found messages:', messages.length);
 
             res.json({
                 success: true,
@@ -149,10 +156,20 @@ export class MessageController {
         try {
             const messageData = {
                 ...req.body,
-                senderId: req.user?.id
+                channelId: new ObjectId(req.body.channelId),
+                userId: new ObjectId(req.user?.id),
+                username: req.user?.username
             };
 
+            console.log('🔍 MessageController.createMessage - Message data:', messageData);
+
             const message = await messageService.createMessage(messageData);
+
+            // Broadcast message to all connected users via Socket.IO
+            const socketServer = SocketServer.getInstance();
+            if (socketServer) {
+                socketServer.broadcastMessage(req.body.channelId, message);
+            }
 
             res.status(201).json({
                 success: true,

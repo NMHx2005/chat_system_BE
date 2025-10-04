@@ -4,7 +4,10 @@ import { UserController } from '../controllers/user.controller.mongodb';
 
 const router = Router();
 
-// Apply authentication middleware to all routes
+// Public routes (no auth required)
+router.get('/:id/avatar', UserController.getUserAvatar);
+
+// Apply authentication middleware to all other routes
 router.use(authMiddleware);
 
 // Get all users (Super Admin only)

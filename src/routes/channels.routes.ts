@@ -10,6 +10,9 @@ router.use(authMiddleware);
 // Get all channels
 router.get('/', ChannelController.getAllChannels);
 
+// Get channels with pagination
+router.get('/paginated', ChannelController.getChannelsPaginated);
+
 // Get channels by group
 router.get('/group/:groupId', ChannelController.getChannelsByGroup);
 

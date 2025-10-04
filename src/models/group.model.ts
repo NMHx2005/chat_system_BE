@@ -4,6 +4,7 @@ export interface IGroup extends Document {
     _id?: ObjectId;
     name: string;
     description: string;
+    category?: string;
     members: Array<{
         userId: ObjectId;
         username: string;
@@ -12,6 +13,7 @@ export interface IGroup extends Document {
     }>;
     admins: ObjectId[];
     isActive: boolean;
+    status: 'active' | 'inactive' | 'pending';
     isPrivate: boolean;
     maxMembers?: number;
     createdAt: Date;
@@ -25,6 +27,7 @@ export interface IGroup extends Document {
 export interface IGroupCreate {
     name: string;
     description: string;
+    status?: 'active' | 'inactive' | 'pending';
     isPrivate?: boolean;
     maxMembers?: number;
     createdBy: ObjectId;
@@ -36,6 +39,7 @@ export interface IGroupCreate {
 export interface IGroupUpdate {
     name?: string;
     description?: string;
+    status?: 'active' | 'inactive' | 'pending';
     isPrivate?: boolean;
     maxMembers?: number;
     avatar?: string;
@@ -48,6 +52,7 @@ export interface IGroupResponse {
     _id: string;
     name: string;
     description: string;
+    category?: string;
     members: Array<{
         userId: string;
         username: string;
@@ -56,6 +61,7 @@ export interface IGroupResponse {
     }>;
     admins: string[];
     isActive: boolean;
+    status: 'active' | 'inactive' | 'pending';
     isPrivate: boolean;
     maxMembers?: number;
     createdAt: string;
@@ -73,23 +79,25 @@ export class GroupModel {
             _id: group._id?.toString() || '',
             name: group.name,
             description: group.description,
+            category: group.category || 'general', // Default to 'general' if not set
             members: group.members.map(member => ({
-                userId: member.userId.toString(),
-                username: member.username,
+                userId: member.userId?.toString() || '',
+                username: member.username || '',
                 role: member.role,
-                joinedAt: member.joinedAt.toISOString()
+                joinedAt: member.joinedAt?.toISOString() || new Date().toISOString()
             })),
-            admins: group.admins.map(id => id.toString()),
+            admins: group.admins?.map(id => id?.toString()).filter(Boolean) || [],
             isActive: group.isActive,
+            status: group.status || 'active', // Default to 'active' if not set
             isPrivate: group.isPrivate,
             maxMembers: group.maxMembers,
-            createdAt: group.createdAt.toISOString(),
-            updatedAt: group.updatedAt.toISOString(),
-            createdBy: group.createdBy.toString(),
+            createdAt: group.createdAt?.toISOString() || new Date().toISOString(),
+            updatedAt: group.updatedAt?.toISOString() || new Date().toISOString(),
+            createdBy: group.createdBy?.toString() || '',
             avatar: group.avatar,
             tags: group.tags,
             rules: group.rules,
-            memberCount: group.members.length
+            memberCount: group.members?.length || 0
         };
     }
 
@@ -97,6 +105,7 @@ export class GroupModel {
         return {
             name: data.name,
             description: data.description,
+            status: data.status || 'active',
             isPrivate: data.isPrivate || false,
             maxMembers: data.maxMembers,
             createdBy: data.createdBy,
@@ -114,6 +123,7 @@ export class GroupModel {
 
         if (data.name !== undefined) update.name = data.name;
         if (data.description !== undefined) update.description = data.description;
+        if (data.status !== undefined) update.status = data.status;
         if (data.isPrivate !== undefined) update.isPrivate = data.isPrivate;
         if (data.maxMembers !== undefined) update.maxMembers = data.maxMembers;
         if (data.avatar !== undefined) update.avatar = data.avatar;

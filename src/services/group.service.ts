@@ -200,7 +200,13 @@ export class GroupService {
     // Admin methods
     async countGroups(): Promise<number> {
         try {
-            return await this.getCollection().countDocuments({ isDeleted: false });
+            // Count all groups, excluding only those explicitly marked as deleted
+            return await this.getCollection().countDocuments({
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ]
+            });
         } catch (error) {
             console.error('Error counting groups:', error);
             throw error;
@@ -213,7 +219,10 @@ export class GroupService {
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
             return await this.getCollection().countDocuments({
-                isDeleted: false,
+                $or: [
+                    { isDeleted: { $ne: true } },
+                    { isDeleted: { $exists: false } }
+                ],
                 isActive: true,
                 updatedAt: { $gte: oneWeekAgo }
             });
@@ -224,14 +233,101 @@ export class GroupService {
     }
 
     // Additional methods for controllers
-    async getAllGroups(): Promise<IGroupResponse[]> {
+    async getAllGroups(options: {
+        page: number;
+        limit: number;
+        search?: string;
+        status?: string;
+        category?: string;
+        isPrivate?: boolean;
+        sortBy?: string;
+        sortOrder?: string;
+    }): Promise<{
+        groups: IGroupResponse[];
+        total: number;
+        page: number;
+        pages: number;
+    }> {
         try {
-            const groups = await this.getCollection()
-                .find({ isDeleted: false })
-                .sort({ createdAt: -1 })
-                .toArray();
+            const skip = (options.page - 1) * options.limit;
+            const filter: any = {
+                $and: [
+                    {
+                        $or: [
+                            { isDeleted: { $ne: true } },
+                            { isDeleted: { $exists: false } }
+                        ]
+                    }
+                ]
+            };
 
-            return groups.map(group => GroupModel.toResponse(group));
+            if (options.search) {
+                filter.$and.push({
+                    $or: [
+                        { name: { $regex: options.search, $options: 'i' } },
+                        { description: { $regex: options.search, $options: 'i' } }
+                    ]
+                });
+            }
+
+            if (options.status) {
+                // Handle both new documents with status field and old documents without it
+                if (options.status === 'active') {
+                    filter.$and.push({
+                        $or: [
+                            { status: 'active' },
+                            { status: { $exists: false } }, // Old documents without status field
+                            { status: null }
+                        ]
+                    });
+                } else {
+                    // For inactive/pending, only match documents that explicitly have these statuses
+                    filter.$and.push({ status: options.status });
+                }
+            }
+
+            if (options.category) {
+                // Handle both new documents with category field and old documents without it
+                if (options.category === 'general') {
+                    filter.$and.push({
+                        $or: [
+                            { category: 'general' },
+                            { category: { $exists: false } }, // Old documents without category field
+                            { category: null }
+                        ]
+                    });
+                } else {
+                    // For specific categories, only match documents that explicitly have these categories
+                    filter.$and.push({ category: options.category });
+                }
+            }
+
+            if (options.isPrivate !== undefined) {
+                filter.$and.push({ isPrivate: options.isPrivate });
+            }
+
+            // Build sort object
+            const sortField = options.sortBy || 'createdAt';
+            const sortOrder = options.sortOrder === 'asc' ? 1 : -1;
+            const sort: any = {};
+            sort[sortField] = sortOrder;
+
+            const [groups, total] = await Promise.all([
+                this.getCollection()
+                    .find(filter)
+                    .skip(skip)
+                    .limit(options.limit)
+                    .sort(sort)
+                    .toArray(),
+                this.getCollection().countDocuments(filter)
+            ]);
+
+            return {
+                groups: groups.map(group => GroupModel.toResponse(group)),
+                total,
+                page: options.page,
+                pages: Math.ceil(total / options.limit)
+            };
         } catch (error) {
             console.error('Error getting all groups:', error);
             throw error;
