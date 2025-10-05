@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authMiddleware, requireSuperAdmin } from '../middleware/auth.middleware';
+import { authMiddleware, requireSuperAdmin, requireGroupAdmin } from '../middleware/auth.middleware';
 import { AdminController } from '../controllers/admin.controller.mongodb';
 
 const router = Router();
@@ -10,8 +10,8 @@ router.use(authMiddleware);
 // Get dashboard statistics
 router.get('/dashboard', AdminController.getDashboard);
 
-// Get all users (Super Admin only)
-router.get('/users', requireSuperAdmin, AdminController.getAllUsers);
+// Get all users (Admin and Super Admin can view)
+router.get('/users', requireGroupAdmin, AdminController.getAllUsers);
 
 // Create user (Super Admin only)
 router.post('/users', requireSuperAdmin, AdminController.createUser);
@@ -49,7 +49,7 @@ router.get('/channels', AdminController.getAllChannels);
 // Get user groups (Admin only)
 router.get('/users/:userId/groups', AdminController.getUserGroups);
 
-// Get user statistics (Admin only)
-router.get('/users/stats', AdminController.getUserStats);
+// Get user statistics (Admin and Super Admin can view)
+router.get('/users/stats', requireGroupAdmin, AdminController.getUserStats);
 
 export default router;

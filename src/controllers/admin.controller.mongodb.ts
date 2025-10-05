@@ -24,7 +24,7 @@ export class AdminController {
     }
 
     /**
-     * Get all users (Super Admin only)
+     * Get all users (Group Admin and Super Admin can view)
      */
     static async getAllUsers(req: Request, res: Response): Promise<void> {
         try {
@@ -55,6 +55,15 @@ export class AdminController {
      */
     static async createUser(req: Request, res: Response): Promise<void> {
         try {
+            // Double check: Only Super Admin can create users
+            if (!req.user?.roles.includes('super_admin')) {
+                res.status(403).json({
+                    success: false,
+                    message: 'Only Super Admin can create users'
+                });
+                return;
+            }
+
             const { username, email, password, roles } = req.body;
 
             if (!username || !email || !password) {
@@ -97,6 +106,15 @@ export class AdminController {
      */
     static async updateUser(req: Request, res: Response): Promise<void> {
         try {
+            // Double check: Only Super Admin can update users
+            if (!req.user?.roles.includes('super_admin')) {
+                res.status(403).json({
+                    success: false,
+                    message: 'Only Super Admin can update users'
+                });
+                return;
+            }
+
             const { id } = req.params;
             const { username, email, roles, isActive } = req.body;
 
@@ -149,6 +167,15 @@ export class AdminController {
      */
     static async deleteUser(req: Request, res: Response): Promise<void> {
         try {
+            // Double check: Only Super Admin can delete users
+            if (!req.user?.roles.includes('super_admin')) {
+                res.status(403).json({
+                    success: false,
+                    message: 'Only Super Admin can delete users'
+                });
+                return;
+            }
+
             const { id } = req.params;
             if (!id) {
                 res.status(400).json({
@@ -187,6 +214,15 @@ export class AdminController {
      */
     static async bulkDeleteUsers(req: Request, res: Response): Promise<void> {
         try {
+            // Double check: Only Super Admin can bulk delete users
+            if (!req.user?.roles.includes('super_admin')) {
+                res.status(403).json({
+                    success: false,
+                    message: 'Only Super Admin can bulk delete users'
+                });
+                return;
+            }
+
             const { userIds } = req.body;
 
             if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -218,6 +254,15 @@ export class AdminController {
      */
     static async bulkUpdateUsers(req: Request, res: Response): Promise<void> {
         try {
+            // Double check: Only Super Admin can bulk update users
+            if (!req.user?.roles.includes('super_admin')) {
+                res.status(403).json({
+                    success: false,
+                    message: 'Only Super Admin can bulk update users'
+                });
+                return;
+            }
+
             const { userIds, updates } = req.body;
 
             if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -424,7 +469,7 @@ export class AdminController {
     }
 
     /**
-     * Get user statistics (Admin only)
+     * Get user statistics (Group Admin and Super Admin can view)
      */
     static async getUserStats(req: Request, res: Response): Promise<void> {
         try {
