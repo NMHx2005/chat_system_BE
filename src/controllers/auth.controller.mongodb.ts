@@ -114,6 +114,15 @@ export class AuthController {
                 return;
             }
 
+            // Check if user is active
+            if (!validUser.isActive) {
+                res.status(403).json({
+                    success: false,
+                    message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.'
+                });
+                return;
+            }
+
             // Update last login
             await userService.updateLastLogin(validUser._id!.toString());
 
@@ -190,6 +199,15 @@ export class AuthController {
                 res.status(401).json({
                     success: false,
                     message: 'Invalid refresh token'
+                });
+                return;
+            }
+
+            // Check if user is active
+            if (!user.isActive) {
+                res.status(403).json({
+                    success: false,
+                    message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.'
                 });
                 return;
             }
