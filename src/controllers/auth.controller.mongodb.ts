@@ -118,7 +118,7 @@ export class AuthController {
             if (!validUser.isActive) {
                 res.status(403).json({
                     success: false,
-                    message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.'
+                    message: 'Your account has been locked. Please contact administrator.'
                 });
                 return;
             }
@@ -207,7 +207,7 @@ export class AuthController {
             if (!user.isActive) {
                 res.status(403).json({
                     success: false,
-                    message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.'
+                    message: 'Your account has been locked. Please contact administrator.'
                 });
                 return;
             }
